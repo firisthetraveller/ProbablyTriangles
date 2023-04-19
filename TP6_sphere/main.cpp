@@ -24,7 +24,9 @@ int main() {
   const std::vector<glimac::ShapeVertex> vertices =
       glimac::sphere_vertices(1.f, 32, 16);
 
-  img::Image texture = p6::load_image_buffer("assets/textures/EarthMap.jpg");
+  img::Image textureEarth =
+      p6::load_image_buffer("assets/textures/EarthMap.jpg");
+  img::Image textureMoon = p6::load_image_buffer("assets/textures/MoonMap.jpg");
   // }
   // catch (std::exception &e) {
   //   std::cerr << "Couldn't load the texture\n";
@@ -41,8 +43,6 @@ int main() {
   {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width(), texture.height(),
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, (const void *)texture.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   }
@@ -127,6 +127,9 @@ int main() {
     {
       glBindTexture(GL_TEXTURE_2D, textures);
       {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureEarth.width(),
+                     textureEarth.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                     (const void *)textureEarth.data());
         glUniform1i(uTexture, 0);
 
         glm::mat4 ProjMatrix = glm::perspective(
@@ -141,6 +144,9 @@ int main() {
                            glm::value_ptr(NormalMatrix));
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureMoon.width(),
+                     textureMoon.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                     (const void *)textureMoon.data());
         for (int i = 0; i < 32; i++) {
           MVMatrix = glm::translate(glm::mat4{1.f}, {0.f, 0.f, -5.f});
           MVMatrix = glm::rotate(MVMatrix, ctx.time(), orbits[i]);
