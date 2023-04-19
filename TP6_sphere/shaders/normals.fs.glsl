@@ -4,8 +4,8 @@ in vec3 vPosition;
 in vec3 vNormal;
 in vec2 vTexCoords;
 
-out vec3 fFragColor;
+out vec4 fFragColor;
 
 void main() {
-  fFragColor = vec3(normalize(vNormal));
+  fFragColor = vec4(normalize(vNormal), 1);
 }
