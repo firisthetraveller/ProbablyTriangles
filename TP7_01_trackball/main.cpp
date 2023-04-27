@@ -1,5 +1,9 @@
+#include "TrackballCamera.hpp"
 #include "glimac/common.hpp"
 #include "glimac/sphere_vertices.hpp"
+#include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/vector_float3.hpp"
 #include "glm/fwd.hpp"
 #include "glm/matrix.hpp"
 #include "img/src/Image.h"
@@ -18,7 +22,7 @@ struct EarthProgram {
   p6::Shader m_Program;
 
   GLint uMVPMatrix;
-  GLint uMVMatrix;
+  GLint uModelMatrix;
   GLint uNormalMatrix;
   GLint uEarthTexture;
   GLint uCloudTexture;
@@ -27,7 +31,7 @@ struct EarthProgram {
       : m_Program{p6::load_shader("shaders/3D.vs.glsl",
                                   "shaders/multiTex3D.fs.glsl")} {
     uMVPMatrix = glGetUniformLocation(m_Program.id(), "uMVPMatrix");
-    uMVMatrix = glGetUniformLocation(m_Program.id(), "uMVMatrix");
+    uModelMatrix = glGetUniformLocation(m_Program.id(), "uModelMatrix");
     uNormalMatrix = glGetUniformLocation(m_Program.id(), "uNormalMatrix");
     uEarthTexture = glGetUniformLocation(m_Program.id(), "uEarthTexture");
     uCloudTexture = glGetUniformLocation(m_Program.id(), "uCloudTexture");
@@ -38,7 +42,7 @@ struct MoonProgram {
   p6::Shader m_Program;
 
   GLint uMVPMatrix;
-  GLint uMVMatrix;
+  GLint uModelMatrix;
   GLint uNormalMatrix;
   GLint uTexture;
 
@@ -46,7 +50,7 @@ struct MoonProgram {
       : m_Program{
             p6::load_shader("shaders/3D.vs.glsl", "shaders/tex3D.fs.glsl")} {
     uMVPMatrix = glGetUniformLocation(m_Program.id(), "uMVPMatrix");
-    uMVMatrix = glGetUniformLocation(m_Program.id(), "uMVMatrix");
+    uModelMatrix = glGetUniformLocation(m_Program.id(), "uModelMatrix");
     uNormalMatrix = glGetUniformLocation(m_Program.id(), "uNormalMatrix");
     uTexture = glGetUniformLocation(m_Program.id(), "uTexture");
   }
@@ -149,8 +153,23 @@ int main() {
     orbits[i] = glm::sphericalRand(1.);
   }
 
+  TrackballCamera camera;
+
+  ctx.mouse_scrolled = [&](p6::MouseScroll scroll) {
+    if (ctx.ctrl()) {
+      std::cout << "Rotation mode\n";
+      camera.rotateLeftRight(scroll.dy / 10.f);
+      camera.rotateUpDown(scroll.dx / 10.f);
+    } else {
+      std::cout << "Distance mode\n";
+      camera.moveFront(scroll.dy / 10.f);
+    }
+  };
+
+  float time = 0;
   // Declare your infinite update loop.
   ctx.update = [&]() {
+    time++;
     /*********************************
      * HERE SHOULD COME THE RENDERING CODE
      *********************************/
@@ -170,13 +189,16 @@ int main() {
       glBindTexture(GL_TEXTURE_2D, cloudTexture);
       glm::mat4 ProjMatrix =
           glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
-      glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5));
-      glm::mat4 NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
+      glm::mat4 ModelMatrix =
+          glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)) *
+          glm::rotate(glm::mat4{1.f}, time / 100.f, glm::vec3(0, 1, 0));
+      glm::mat4 NormalMatrix = glm::transpose(glm::inverse(ModelMatrix));
+      glm::mat4 ViewMatrix = camera.getViewMatrix();
 
       glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE,
-                         glm::value_ptr(ProjMatrix * MVMatrix));
-      glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE,
-                         glm::value_ptr(MVMatrix));
+                         glm::value_ptr(ProjMatrix * ViewMatrix * ModelMatrix));
+      glUniformMatrix4fv(earthProgram.uModelMatrix, 1, GL_FALSE,
+                         glm::value_ptr(ViewMatrix * ModelMatrix));
       glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE,
                          glm::value_ptr(NormalMatrix));
       glDrawArrays(GL_TRIANGLES, 0, vertices.size());
@@ -188,15 +210,16 @@ int main() {
       glBindTexture(GL_TEXTURE_2D, moonTexture);
 
       for (int i = 0; i < 32; i++) {
-        MVMatrix = glm::translate(glm::mat4{1.f}, {0.f, 0.f, -5.f});
-        MVMatrix = glm::rotate(MVMatrix, ctx.time(), orbits[i]);
-        MVMatrix = glm::translate(MVMatrix, {-2.f, 0.f, 0.f});
-        MVMatrix = glm::scale(MVMatrix, glm::vec3{0.2f});
+        ModelMatrix = glm::translate(glm::mat4{1.f}, {0.f, 0.f, -5.f});
+        ModelMatrix = glm::rotate(ModelMatrix, ctx.time(), orbits[i]);
+        ModelMatrix = glm::translate(ModelMatrix, {-2.f, 0.f, 0.f});
+        ModelMatrix = glm::scale(ModelMatrix, glm::vec3{0.2f});
 
-        glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE,
-                           glm::value_ptr(ProjMatrix * MVMatrix));
-        glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE,
-                           glm::value_ptr(MVMatrix));
+        glUniformMatrix4fv(
+            moonProgram.uMVPMatrix, 1, GL_FALSE,
+            glm::value_ptr(ProjMatrix * ViewMatrix * ModelMatrix));
+        glUniformMatrix4fv(moonProgram.uModelMatrix, 1, GL_FALSE,
+                           glm::value_ptr(ViewMatrix * ModelMatrix));
         glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE,
                            glm::value_ptr(NormalMatrix));
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());

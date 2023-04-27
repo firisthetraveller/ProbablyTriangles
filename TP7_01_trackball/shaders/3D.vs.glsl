@@ -20,7 +20,7 @@ void main() {
   // Calcul des valeurs de sortie
   vPosition = vec3(uMVMatrix * vertexPosition);
   vNormal = vec3(uNormalMatrix * vertexNormal);
-  vTexCoords = aTexCoords;
+  vTexCoords = vec2(aTexCoords.x, 1 - aTexCoords.y);
 
   // Calcul de la position projetée
   gl_Position = uMVPMatrix * vertexPosition;
