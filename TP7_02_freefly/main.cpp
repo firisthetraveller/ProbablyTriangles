@@ -1,4 +1,4 @@
-#include "TrackballCamera.hpp"
+#include "FreeflyCamera.hpp"
 #include "glimac/common.hpp"
 #include "glimac/sphere_vertices.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
@@ -153,23 +153,30 @@ int main() {
     orbits[i] = glm::sphericalRand(1.);
   }
 
-  TrackballCamera camera;
+  FreeflyCamera camera;
 
   ctx.mouse_scrolled = [&](p6::MouseScroll scroll) {
-    if (ctx.ctrl()) {
-      std::cout << "Rotation mode\n";
-      camera.rotateLeftRight(scroll.dy / 10.f);
-      camera.rotateUpDown(scroll.dx / 10.f);
-    } else {
-      std::cout << "Distance mode\n";
-      camera.moveFront(scroll.dy / 10.f);
-    }
+    camera.rotateLeft(scroll.dy);
+    camera.rotateUp(scroll.dx);
   };
 
   float time = 0;
   // Declare your infinite update loop.
   ctx.update = [&]() {
     time++;
+
+    if (ctx.key_is_pressed(GLFW_KEY_W)) {
+      camera.moveFront(ctx.delta_time());
+    } else if (ctx.key_is_pressed(GLFW_KEY_S)) {
+      camera.moveFront(-ctx.delta_time());
+    }
+
+    if (ctx.key_is_pressed(GLFW_KEY_A)) {
+      camera.moveLeft(ctx.delta_time());
+    } else if (ctx.key_is_pressed(GLFW_KEY_D)) {
+      camera.moveLeft(-ctx.delta_time());
+    }
+
     /*********************************
      * HERE SHOULD COME THE RENDERING CODE
      *********************************/

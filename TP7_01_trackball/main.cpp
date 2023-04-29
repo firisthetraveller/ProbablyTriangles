@@ -158,8 +158,8 @@ int main() {
   ctx.mouse_scrolled = [&](p6::MouseScroll scroll) {
     if (ctx.ctrl()) {
       std::cout << "Rotation mode\n";
-      camera.rotateLeftRight(scroll.dy / 10.f);
-      camera.rotateUpDown(scroll.dx / 10.f);
+      camera.rotateLeft(scroll.dy / 10.f);
+      camera.rotateUp(scroll.dx / 10.f);
     } else {
       std::cout << "Distance mode\n";
       camera.moveFront(scroll.dy / 10.f);
@@ -219,7 +219,7 @@ int main() {
             moonProgram.uMVPMatrix, 1, GL_FALSE,
             glm::value_ptr(ProjMatrix * ViewMatrix * ModelMatrix));
         glUniformMatrix4fv(moonProgram.uModelMatrix, 1, GL_FALSE,
-                           glm::value_ptr(ViewMatrix * ModelMatrix));
+                           glm::value_ptr(ModelMatrix));
         glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE,
                            glm::value_ptr(NormalMatrix));
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());

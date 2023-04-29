@@ -30,9 +30,11 @@ void FreeflyCamera::moveFront(float scalar) {
 }
 
 void FreeflyCamera::rotateLeft(float degrees) {
-  _position += degrees * glm::pi<float>() / 180;
+  _theta += degrees * glm::pi<float>() / 180;
+  computeDirectionVectors();
 }
 
 void FreeflyCamera::rotateUp(float degrees) {
-  _position += degrees * glm::pi<float>() / 180;
+  _phi += degrees * glm::pi<float>() / 180;
+  computeDirectionVectors();
 }
